@@ -1,0 +1,18 @@
+import os
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+
+app = FastAPI()
+
+@app.get("/")
+async def root():
+    # Look for static/index.html in the same folder as main.py
+    static_index = os.path.join(os.path.dirname(__file__), "static", "index.html")
+
+    # If not found, look one directory above
+    if not os.path.exists(static_index):
+        here = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        static_index = os.path.join(here, "static", "index.html")
+
+    # Serve the file
+    return FileResponse(static_index)

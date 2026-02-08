@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum AI Assistant</title>
+    <style>
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .chatbot-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 24px;
+        }
+
+        .chatbot-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 500px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d1b69 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.user {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.bot {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.typing {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+            font-style: italic;
+        }
+
+        .chatbot-input {
+            padding: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .chatbot-input input::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .chatbot-input input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .chatbot-input button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-input button:hover {
+            transform: scale(1.05);
+        }
+
+        .chatbot-input button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .api-key-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .api-key-content {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2d1b69 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            color: white;
+        }
+
+        .api-key-content h3 {
+            margin-bottom: 20px;
+            color: #4ecdc4;
+        }
+
+        .api-key-content input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .api-key-content button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .api-key-content button:hover {
+            transform: scale(1.05);
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chatbot-icon" onclick="toggleChatbot()">
+            🤖
+        </div>
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                🚀 Quantum AI Assistant
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot">
+                    Hello! I'm your Quantum AI Assistant. I can help you understand quantum superdense coding, steganography, and our project implementation. What would you like to know?
+                </div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatbotInput" placeholder="Ask me about quantum computing..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" id="sendButton">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-key-modal" id="apiKeyModal">
+        <div class="api-key-content">
+            <h3>🔑 Enter Your Gemini API Key</h3>
+            <p>To use the AI assistant, please provide your Gemini API key:</p>
+            <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key">
+            <button onclick="saveApiKey()">Save & Start</button>
+            <button onclick="skipApiKey()">Skip for now</button>
+            <div class="error-message" id="apiKeyError"></div>
+        </div>
+    </div>
+
+    <script>
+        let isChatbotOpen = false;
+        let apiKey = localStorage.getItem('geminiApiKey');
+        let conversationHistory = [];
+
+        // Project knowledge base
+        const projectKnowledge = `
+        This is a Quantum Superdense Coding + Steganography project with the following features:
+
+        PROJECT OVERVIEW:
+        - Quantum superdense coding implementation using Qiskit
+        - Quantum steganography to hide messages in quantum noise
+        - Interactive 3D visualization with Three.js
+        - Flask API server for quantum operations
+        - Educational gamification features
+
+        KEY COMPONENTS:
+        1. quantum_core/ - Core quantum implementation
+           - superdense_coding.py: Main protocol implementation
+           - bell_states.py: Bell state operations
+           - steganography.py: Message hiding in quantum noise
+
+        2. web_interface/ - 3D visualization
+           - dashboard.html: Main web interface
+           - quantum_canvas.js: Three.js 3D graphics
+           - assets/: Three.js libraries
+
+        3. quantum_server.py - Flask API server
+        4. vr_visualizer/ - Dash-based VR application
+        5. steganography_demo.py - Demo script
+
+        QUANTUM CONCEPTS:
+        - Superdense coding: Send 2 classical bits using 1 qubit
+        - Bell states: |Φ⁺⟩ = (|00⟩ + |11⟩)/√2, |Φ⁻⟩, |Ψ⁺⟩, |Ψ⁻⟩
+        - Pauli operators: I (Identity), X (NOT), Z (Phase), Y (Both)
+        - Quantum entanglement: Non-local correlations
+        - Quantum steganography: Hide messages in quantum noise
+
+        PROTOCOL STEPS:
+        1. Create Bell pair |Φ⁺⟩ between Alice and Bob
+        2. Alice applies Pauli operation to encode 2-bit message
+        3. Alice sends her qubit to Bob
+        4. Bob performs Bell measurement to decode message
+
+        SECURITY FEATURES:
+        - Quantum steganography for message hiding
+        - Eavesdropping detection
+        - Quantum signatures for authentication
+        - Team watermarking
+
+        USAGE:
+        - Start server: python quantum_server.py
+        - Open dashboard: http://localhost:5000/dashboard
+        - Select 2-bit message (00, 01, 10, 11)
+        - Choose Pauli operator (I, X, Z, Y)
+        - Enable/disable steganography
+        - Watch 3D animation of quantum transmission
+
+        TECHNOLOGIES:
+        - Python, Qiskit, Flask
+        - Three.js, WebGL
+        - HTML5, CSS3, JavaScript
+        - Dash, Plotly
+        `;
+
+        // Initialize chatbot
+        function initChatbot() {
+            if (!apiKey) {
+                document.getElementById('apiKeyModal').style.display = 'flex';
+            } else {
+                addBotMessage("Welcome back! I'm ready to help you with quantum superdense coding. You can ask me about the protocol, implementation, or any quantum concepts.");
+            }
+        }
+
+        function toggleChatbot() {
+            const window = document.getElementById('chatbotWindow');
+            isChatbotOpen = !isChatbotOpen;
+            window.style.display = isChatbotOpen ? 'flex' : 'none';
+            
+            if (isChatbotOpen && !apiKey) {
+                document.getElementById('apiKeyModal').style.display = 'flex';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addUserMessage(message);
+            input.value = '';
+            
+            if (apiKey) {
+                sendToGemini(message);
+            } else {
+                addBotMessage("Please provide your Gemini API key to use the AI assistant. Click the settings icon to configure.");
+            }
+        }
+
+        function addUserMessage(message) {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.textContent = message;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            conversationHistory.push({ role: 'user', content: message });
+        }
+
+        function addBotMessage(message) {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.textContent = message;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            conversationHistory.push({ role: 'assistant', content: message });
+        }
+
+        function addTypingIndicator() {
+            const messagesContainer = document.getElementById('chatbotMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message typing';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function sendToGemini(message) {
+            addTypingIndicator();
+            
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `You are a helpful AI assistant specializing in quantum computing and specifically this quantum superdense coding project. 
+
+${projectKnowledge}
+
+User question: ${message}
+
+Please provide a helpful, accurate response based on the project knowledge above. Keep responses concise but informative.`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                removeTypingIndicator();
+
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    const botResponse = data.candidates[0].content.parts[0].text;
+                    addBotMessage(botResponse);
+                } else {
+                    addBotMessage("I'm sorry, I couldn't generate a response. Please check your API key and try again.");
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                addBotMessage("Sorry, there was an error connecting to the AI service. Please check your API key and internet connection.");
+                console.error('Error:', error);
+            }
+        }
+
+        function saveApiKey() {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const errorDiv = document.getElementById('apiKeyError');
+            
+            if (!apiKeyInput.value.trim()) {
+                errorDiv.textContent = 'Please enter a valid API key';
+                return;
+            }
+            
+            apiKey = apiKeyInput.value.trim();
+            localStorage.setItem('geminiApiKey', apiKey);
+            document.getElementById('apiKeyModal').style.display = 'none';
+            
+            addBotMessage("Great! Your API key has been saved. I'm now ready to help you with quantum superdense coding questions!");
+        }
+
+        function skipApiKey() {
+            document.getElementById('apiKeyModal').style.display = 'none';
+            addBotMessage("You can still explore the interface, but you'll need to provide an API key to use the AI assistant features.");
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initChatbot);
+    </script>
+</body>
+</html>
