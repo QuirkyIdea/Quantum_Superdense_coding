@@ -3,7 +3,7 @@ import json
 
 url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
-api_key = "AIzaSyC2UCFyvVF6Nc_UxcUZW6-2XLKrYlY0KqA"  # <-- replace with your actual API key
+api_key = ""  # <-- replace with your actual API key
 
 headers = {
     "Content-Type": "application/json",
